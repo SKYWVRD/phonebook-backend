@@ -26,15 +26,21 @@ app.get("/api/persons/:id", (request, response) => {
 });
 
 app.get("/api/persons/", (request, response) => {
-    response.json(phonebook);
+    const people = []
+    Person.find({}).then(persons=>{
+        persons.forEach(person=>{
+            console.log(person);
+            people.push(person);
+        })
+        response.json(people)
+    })
+
 });
 
 app.get("/info", (request, response) => {
-    const totalPersons = phonebook.length;
-    const currentTime = new Date();
-    response.send(
-        `<p>Phonebook has info for ${totalPersons} people<p><p>${currentTime}`
-    );
+    Person.find({}).then(persons=>{
+        response.send(`Total entries in phonebook are ${persons.length}`)
+    })
 });
 
 app.delete("/api/persons/:id", (request, response) => {
@@ -45,19 +51,16 @@ app.delete("/api/persons/:id", (request, response) => {
 });
 
 app.post("/api/persons", (request, response) => {
-    const newPerson = request.body;
-    if (!newPerson.name || !newPerson.number) {
-        response.status(500).send("Missing name or number");
-        return;
-    }
-    if(phonebook.some(person => person.name === newPerson.name)){
-        response.status(500).send(`${newPerson.name} already exists in phonebook`)
-        return;
-    }
-    const id = Math.floor(Math.random() * 1000);
-    phonebook = phonebook.concat({ ...newPerson, id: id });
-    response.json(phonebook);
-});
+    const person = new Person ({
+        name: request.body.name,
+        number: request.body.number
+    })
+
+    person.save().then(savedNumber => {
+        console.log('Person Saved');
+        response.json(savedNumber)
+    })
+})
 
 const uknownEndpoint = (request, response) => {
     response.status(404).send({error: 'unknown endpoint'})
